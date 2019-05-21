@@ -1,0 +1,12 @@
+images {
+  image: "/assets/player.png"
+}
+images {
+  image: "/assets/map.png"
+}
+images {
+  image: "/assets/proyectile.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

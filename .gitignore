@@ -1,0 +1,12 @@
+client/.internal
+client/build
+client/.externalToolBuilders
+client/.DS_Store
+client/Thumbs.db
+client/.lock-wscript
+client/*.pyc
+client/.project
+client/.cproject
+client/builtins
+
+server/node_modules

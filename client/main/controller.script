@@ -1,0 +1,60 @@
+local ColyseusClient = require("colyseus.client")
+
+local CLIENT_URL = "ws://localhost:2567"
+local ROOM_NAME = "match_room"
+
+local client
+local room
+local players = {}
+
+local function get_or_create_external_player(session_id)
+  if players[session_id] == nil then
+    players[session_id] = factory.create("/root#player_factory", nil, nil, { controlled = false })
+  end
+
+  return players[session_id]
+end
+
+local function register_room_listeners(self)
+  room:listen("players/:session_id/:attribute", function(change)
+    local session_id = change.path.session_id
+    if room.sessionId == session_id then return end
+    local player = get_or_create_external_player(session_id)
+
+    if change.path.attribute == "x" then msg.post(players[session_id], "set_position_x", { x = change.value }) end
+    if change.path.attribute == "y" then msg.post(players[session_id], "set_position_y", { y = change.value }) end
+  end)
+end
+
+local function join_room(self)
+  room = client:join(ROOM_NAME)
+  room:on("join", function() register_room_listeners(self) end)
+end
+
+local function init_multiplayer_client(self)
+  client = ColyseusClient.new(CLIENT_URL, false) -- false to avoid connecting inmediatly
+  client:on("open", function() join_room(self) end)
+  client:connect()
+end
+
+local function publish_state_update(action)
+  if (room) then
+    room:send(action)
+  end
+end
+
+function init(self)
+  msg.post(".", "acquire_input_focus")
+  msg.post("@render:", "use_fixed_fit_projection", { near = -1, far = 1 })
+  init_multiplayer_client(self)
+end
+
+function update(self, dt)
+  client:loop()
+end
+
+function on_message(self, message_id, message, sender)
+  if message_id == hash("publish_state_update") then
+    publish_state_update(message)
+  end
+end
