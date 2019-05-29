@@ -1,6 +1,6 @@
 import { Room, Client, FossilDeltaSerializer, serialize } from "colyseus";
 import MatchState from './State'
-import MoveAction from './MoveAction'
+import PersistPlayerInputAction from './PersistPlayerInputAction'
 
 @serialize(FossilDeltaSerializer)
 class MatchRoom extends Room<MatchState> {
@@ -9,7 +9,6 @@ class MatchRoom extends Room<MatchState> {
   }
 
   onJoin(client: Client, _options: any) {
-    console.log({ sessionId: client.sessionId })
     this.state.addPlayer(client)
   }
 
@@ -17,8 +16,8 @@ class MatchRoom extends Room<MatchState> {
     this.state.removePlayer(client)
   }
   
-  onMessage(client: Client, action: MoveAction) {
-    this.state.movePlayer(client, action)
+  onMessage(client: Client, action: PersistPlayerInputAction) {
+    this.state.persistPlayerInput(client, action)
   }
 }
 

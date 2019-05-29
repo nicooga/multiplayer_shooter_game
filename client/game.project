@@ -1,6 +1,7 @@
 [project]
 title = multiplayer_2d_arena
-dependencies = https://github.com/colyseus/colyseus-defold/archive/0.10.2.zip,https://github.com/britzl/defold-websocket/archive/1.5.1.zip,https://github.com/britzl/defold-luasocket/archive/0.11.zip,https://github.com/britzl/defold-luasec/archive/1.0.1.zip
+dependencies = https://github.com/britzl/defold-websocket/archive/1.5.1.zip,https://github.com/britzl/defold-luasocket/archive/0.11.zip,https://github.com/britzl/defold-luasec/archive/1.0.1.zip,https://github.com/colyseus/colyseus-defold/archive/master.zip
+custom_resources = 
 
 [bootstrap]
 main_collection = /main/main.collectionc
@@ -27,4 +28,3 @@ input_method = HiddenInputField
 
 [physics]
 type = 3D
-

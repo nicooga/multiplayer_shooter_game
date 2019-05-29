@@ -1,4 +1,8 @@
-local ColyseusClient = require("colyseus.client")
+local Rx = require 'vendor.rx'
+local ColyseusClient = require 'colyseus.client'
+
+local PlayerInputObservable = require 'lib.player_input_observable'
+local MultiplayerOrchestrator = require 'lib.multiplayer_orchestrator'
 
 local CLIENT_URL = "ws://localhost:2567"
 local ROOM_NAME = "match_room"
@@ -7,40 +11,73 @@ local client
 local room
 local players = {}
 
-local function get_or_create_external_player(session_id)
-  if players[session_id] == nil then
-    players[session_id] = factory.create("/root#player_factory", nil, nil, { controlled = false })
-  end
+local function on_player_connected(session_id)
+  local player = MultiplayerOrchestrator:get_player_by_session_id(session_id)
 
-  return players[session_id]
-end
+  if player.id == 1 then return end -- We don't capture input for player 1, no no.
 
-local function register_room_listeners(self)
-  room:listen("players/:session_id/:attribute", function(change)
-    local session_id = change.path.session_id
-    if room.sessionId == session_id then return end
-    local player = get_or_create_external_player(session_id)
+  pprint("NEW PLAYER CONNECTED YAYYYY")
 
-    if change.path.attribute == "x" then msg.post(players[session_id], "set_position_x", { x = change.value }) end
-    if change.path.attribute == "y" then msg.post(players[session_id], "set_position_y", { y = change.value }) end
+  room:listen('players/' .. session_id .. '/input/:input_id', function(change)
+    pprint("PLAYER INPUT IS ARRIVING, YASSS, WE CLOSE")
+    pprint(change)
+    if change.operation ~= 'add' then return end
+
+    local input = change.value
+
+    player.player_input:onNext({
+      action_name = change.value.actionName,
+      action = {
+        pressed = change.value.pressed,
+        released = change.value.released
+      }
+    })
   end)
 end
 
-local function join_room(self)
+local function on_room_joined(self)
+  local current_player = MultiplayerOrchestrator:create_player({
+    id = 1,
+    session_id = room.sessionId
+  })
+
+  Rx.Subject.create()
+    :merge(
+      current_player.player_input:pressed():by_action('up'),
+      current_player.player_input:pressed():by_action('down'),
+      current_player.player_input:pressed():by_action('right'),
+      current_player.player_input:pressed():by_action('left'),
+      current_player.player_input:released():by_action('up'),
+      current_player.player_input:released():by_action('down'),
+      current_player.player_input:released():by_action('right'),
+      current_player.player_input:released():by_action('left'),
+      current_player.player_input:pressed():by_action('click')
+    )
+    :subscribe(function(input)
+      room:send({
+        type = 'persist_player_input',
+        input = {
+          actionName = input.action_name,
+          pressed = input.action.pressed,
+          released = input.action.released
+        }
+      })
+    end)
+
+  room:listen('players/:session_id', function(change)
+    on_player_connected(change.path.session_id)
+  end)
+end
+
+local function on_client_connected(self)
   room = client:join(ROOM_NAME)
-  room:on("join", function() register_room_listeners(self) end)
+  room:on("join", function() on_room_joined(self) end)
 end
 
 local function init_multiplayer_client(self)
   client = ColyseusClient.new(CLIENT_URL, false) -- false to avoid connecting inmediatly
-  client:on("open", function() join_room(self) end)
-  client:connect()
-end
-
-local function publish_state_update(action)
-  if (room) then
-    room:send(action)
-  end
+  client:on("open", function() on_client_connected(self) end)
+  client:connect() -- connect after registering listeners
 end
 
 function init(self)
@@ -51,10 +88,4 @@ end
 
 function update(self, dt)
   client:loop()
-end
-
-function on_message(self, message_id, message, sender)
-  if message_id == hash("publish_state_update") then
-    publish_state_update(message)
-  end
 end

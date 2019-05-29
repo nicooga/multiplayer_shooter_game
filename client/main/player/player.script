@@ -1,8 +1,16 @@
-go.property('controlled', true)
+local Rx = require 'vendor.rx'
+
+local MultiplayerOrchestrator = require 'lib.multiplayer_orchestrator'
+
+go.property('player_id', 1)
 
 function init(self)
-  if self.controlled then msg.post(".", "acquire_input_focus") end
-
+  if self.player_id == 1 then
+    msg.post('.', 'acquire_input_focus')
+  end
+  
+  self.player_input = MultiplayerOrchestrator:get_player_by_id(self.player_id).player_input
+  
   self.last_published_position = vmath.vector3(0, 0, 0)
   
   self.dir = vmath.vector3(0, 0, 0)
@@ -13,16 +21,56 @@ function init(self)
 
   self.firing = false
   self.firing_pos = vmath.vector3(0, 0, 0)
+
+  self.last_received_input = {}
+
+  local up_key_pressed    = self.player_input:pressed():by_action('up')
+  local down_key_pressed  = self.player_input:pressed():by_action('down')
+  local right_key_pressed = self.player_input:pressed():by_action('right')
+  local left_key_pressed  = self.player_input:pressed():by_action('left')
+
+  local up_key_released    = self.player_input:released():by_action('up')
+  local down_key_released  = self.player_input:released():by_action('down')
+  local right_key_released = self.player_input:released():by_action('right')
+  local left_key_released  = self.player_input:released():by_action('left')
+
+  local fired = self.player_input:pressed():by_action('click')
+
+  Rx.Subject.create()
+    :merge(
+      left_key_released:merge(right_key_released):tap(function(input) self.input.x = 0 end),
+      up_key_released:merge(down_key_released):tap(function(input) self.input.y = 0 end),
+      up_key_pressed:tap(function(input) self.input.y = 1 end),
+      down_key_pressed:tap(function(input) self.input.y = -1 end),
+      right_key_pressed:tap(function(input) self.input.x = 1 end),
+      left_key_pressed:tap(function(input) self.input.x = -1 end)
+    )
+    :subscribe(function(_input)
+      if vmath.length(self.input) > 0 then
+        self.moving = true
+        self.dir = vmath.normalize(self.input)
+      else
+        self.moving = false
+      end
+    end)
+
+  fired:subscribe(function(input)
+    self.firing_pos = vmath.vector3(input.action.x, input.action.y, 0)
+    self.firing = true
+  end)
 end
 
 local function move(self, dt)
+  if (not self.moving) then return end
+
   local pos = go.get_position()
   pos = pos + self.dir * self.speed * dt
   go.set_position(pos)
-  self.position = pos
 end
 
 local function fire(self)
+  if (not self.firing) then return end
+
   local player_pos = go.get_world_position()
 
   local proyectile_dir = vmath.normalize(self.firing_pos - player_pos)
@@ -30,66 +78,20 @@ local function fire(self)
   local angle = math.atan2(proyectile_dir.y, proyectile_dir.x)
   local rot = vmath.quat_rotation_z(angle)
   
-  factory.create("#proyectile_factory", nil, rot, { dir = proyectile_dir })
+  factory.create('#proyectile_factory', nil, rot, { dir = proyectile_dir })
 end
 
 local function reset_after_update(self)
-  self.input.x = 0
-  self.input.y = 0
-  self.moving = false
   self.firing = false
   self.firing_pos = vmath.vector3(0, 0, 0)
 end
 
-local function publish_player_position(self)
-  local cur_pos = go.get_position()
-  
-  if self.last_published_position ~= cur_pos then
-    msg.post('/root#controller', 'publish_state_update', {
-      type = 'move_player',
-      x = cur_pos.x,
-      y = cur_pos.y
-    })
-
-    self.last_published_position = cur_pos
-  end
-end
-
 function update(self, dt)
-  if self.moving then move(self, dt) end
-  if self.firing then fire(self, dt) end
+  move(self, dt)
+  fire(self, dt)
   reset_after_update(self)
-  if self.controlled then publish_player_position(self) end
 end
 
 function on_input(self, action_id, action)
-  if action_id == hash("up") then
-    self.input.y = 1
-  elseif action_id == hash("down") then
-    self.input.y = -1
-  elseif action_id == hash("right") then
-    self.input.x = 1
-  elseif action_id == hash("left") then
-    self.input.x = -1
-  elseif action_id == hash("click") and action.pressed then
-    self.firing_pos = vmath.vector3(action.x, action.y, 0)
-    self.firing = true
-  end
-
-  if vmath.length(self.input) > 0 then
-    self.moving = true
-    self.dir = vmath.normalize(self.input)
-  end
-end
-
-function on_message(self, message_id, message, sender)
-  if message_id == hash("set_position_x") then
-    local pos = go.get_position()
-    pos.x = message.x
-    go.set_position(pos)
-  elseif message_id == hash("set_position_y") then
-    local pos = go.get_position()
-    pos.y = message.y
-    go.set_position(pos)
-  end
+  self.player_input:onNext({ action_id = action_id, action = action })
 end
