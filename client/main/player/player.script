@@ -9,9 +9,7 @@ function init(self)
     msg.post('.', 'acquire_input_focus')
   end
   
-  self.player_input = MultiplayerOrchestrator:get_player_by_id(self.player_id).player_input
-  
-  self.last_published_position = vmath.vector3(0, 0, 0)
+  self.player_input = MultiplayerOrchestrator:get_player_by_id(self.player_id).input
   
   self.dir = vmath.vector3(0, 0, 0)
   self.input = vmath.vector3(0, 0, 0)
@@ -21,8 +19,6 @@ function init(self)
 
   self.firing = false
   self.firing_pos = vmath.vector3(0, 0, 0)
-
-  self.last_received_input = {}
 
   local up_key_pressed    = self.player_input:pressed():by_action('up')
   local down_key_pressed  = self.player_input:pressed():by_action('down')

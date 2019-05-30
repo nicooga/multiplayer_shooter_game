@@ -7,9 +7,9 @@ local MultiplayerOrchestrator = {
 
 function MultiplayerOrchestrator:build_player(opts)
   return {
-    id           = opts.id or #self.players_by_id + 1,
-    session_id   = opts.session_id,
-    player_input = PlayerInputObservable.create()
+    id         = opts.id or #self.players_by_id + 1,
+    session_id = opts.session_id,
+    input      = PlayerInputObservable.create()
   }
 end
 

@@ -16,16 +16,12 @@ local function on_player_connected(session_id)
 
   if player.id == 1 then return end -- We don't capture input for player 1, no no.
 
-  pprint("NEW PLAYER CONNECTED YAYYYY")
-
   room:listen('players/' .. session_id .. '/input/:input_id', function(change)
-    pprint("PLAYER INPUT IS ARRIVING, YASSS, WE CLOSE")
-    pprint(change)
     if change.operation ~= 'add' then return end
 
     local input = change.value
 
-    player.player_input:onNext({
+    player.input:onNext({
       action_name = change.value.actionName,
       action = {
         pressed = change.value.pressed,
@@ -43,15 +39,15 @@ local function on_room_joined(self)
 
   Rx.Subject.create()
     :merge(
-      current_player.player_input:pressed():by_action('up'),
-      current_player.player_input:pressed():by_action('down'),
-      current_player.player_input:pressed():by_action('right'),
-      current_player.player_input:pressed():by_action('left'),
-      current_player.player_input:released():by_action('up'),
-      current_player.player_input:released():by_action('down'),
-      current_player.player_input:released():by_action('right'),
-      current_player.player_input:released():by_action('left'),
-      current_player.player_input:pressed():by_action('click')
+      current_player.input:pressed():by_action('up'),
+      current_player.input:pressed():by_action('down'),
+      current_player.input:pressed():by_action('right'),
+      current_player.input:pressed():by_action('left'),
+      current_player.input:released():by_action('up'),
+      current_player.input:released():by_action('down'),
+      current_player.input:released():by_action('right'),
+      current_player.input:released():by_action('left'),
+      current_player.input:pressed():by_action('click')
     )
     :subscribe(function(input)
       room:send({
