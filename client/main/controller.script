@@ -23,10 +23,8 @@ local function on_player_connected(session_id)
 
     player.input:onNext({
       action_name = change.value.actionName,
-      action = {
-        pressed = change.value.pressed,
-        released = change.value.released
-      }
+      pressed = change.value.pressed,
+      released = change.value.released
     })
   end)
 end
@@ -54,8 +52,8 @@ local function on_room_joined(self)
         type = 'persist_player_input',
         input = {
           actionName = input.action_name,
-          pressed = input.action.pressed,
-          released = input.action.released
+          pressed = input.pressed,
+          released = input.released
         }
       })
     end)

@@ -89,5 +89,9 @@ function update(self, dt)
 end
 
 function on_input(self, action_id, action)
-  self.player_input:onNext({ action_id = action_id, action = action })
+  self.player_input:onNext({
+    action_id = action_id,
+    pressed = action.pressed,
+    released = action.released
+  })
 end

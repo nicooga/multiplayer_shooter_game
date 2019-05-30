@@ -14,13 +14,13 @@ end
 
 function PlayerInputObservable:pressed()
   return PlayerInputObservable.create(
-    self:filter(function(input) return input.action.pressed end)
+    self:filter(function(input) return input.pressed end)
   )
 end
 
 function PlayerInputObservable:released()
   return PlayerInputObservable.create(
-    self:filter(function(input) return input.action.released end)
+    self:filter(function(input) return input.released end)
   )
 end
 
