@@ -51,7 +51,7 @@ function init(self)
     end)
 
   fired:subscribe(function(input)
-    self.firing_pos = vmath.vector3(input.action.x, input.action.y, 0)
+    self.firing_pos = vmath.vector3(input.x, input.y, 0)
     self.firing = true
   end)
 end
@@ -91,7 +91,9 @@ end
 function on_input(self, action_id, action)
   self.player_input:onNext({
     action_id = action_id,
-    pressed = action.pressed,
-    released = action.released
+    pressed   = action.pressed,
+    released  = action.released,
+    x         = action.x,
+    y         = action.y
   })
 end
