@@ -4,33 +4,27 @@ local MultiplayerOrchestrator = require 'lib.multiplayer_orchestrator'
 
 go.property('player_id', 1)
 
-function init(self)
-  if self.player_id == 1 then
-    msg.post('.', 'acquire_input_focus')
-  end
-  
-  self.player_input = MultiplayerOrchestrator:get_player_by_id(self.player_id).input
-  
-  self.dir = vmath.vector3(0, 0, 0)
-  self.input = vmath.vector3(0, 0, 0)
+local function subscribe_to_position_updates(self)
+  if self.player.id == 1 then return end
+  local id = go.get_id()
 
-  self.moving = false
-  self.speed = 256
+  self.player.position:subscribe(function(pos)
+    go.set_position(vmath.vector3(pos.x, pos.y, 0), id)
+  end)
+end
 
-  self.firing = false
-  self.firing_pos = vmath.vector3(0, 0, 0)
+local function subscribe_to_input_updates(self)
+  local up_key_pressed    = self.player.input:pressed():by_action('up')
+  local down_key_pressed  = self.player.input:pressed():by_action('down')
+  local right_key_pressed = self.player.input:pressed():by_action('right')
+  local left_key_pressed  = self.player.input:pressed():by_action('left')
 
-  local up_key_pressed    = self.player_input:pressed():by_action('up')
-  local down_key_pressed  = self.player_input:pressed():by_action('down')
-  local right_key_pressed = self.player_input:pressed():by_action('right')
-  local left_key_pressed  = self.player_input:pressed():by_action('left')
+  local up_key_released    = self.player.input:released():by_action('up')
+  local down_key_released  = self.player.input:released():by_action('down')
+  local right_key_released = self.player.input:released():by_action('right')
+  local left_key_released  = self.player.input:released():by_action('left')
 
-  local up_key_released    = self.player_input:released():by_action('up')
-  local down_key_released  = self.player_input:released():by_action('down')
-  local right_key_released = self.player_input:released():by_action('right')
-  local left_key_released  = self.player_input:released():by_action('left')
-
-  local fired = self.player_input:pressed():by_action('click')
+  local fired = self.player.input:pressed():by_action('click')
 
   Rx.Subject.create()
     :merge(
@@ -56,11 +50,30 @@ function init(self)
   end)
 end
 
+function init(self)
+  if self.player_id == 1 then
+    msg.post('.', 'acquire_input_focus')
+  end
+
+  self.player = MultiplayerOrchestrator:get_player_by_id(self.player_id)
+  self.dir = vmath.vector3(0, 0, 0)
+  self.input = vmath.vector3(0, 0, 0)
+  self.moving = false
+  self.speed = 256
+  self.firing = false
+  self.firing_pos = vmath.vector3(0, 0, 0)
+  self.time_since_last_position_update = 0
+
+  subscribe_to_input_updates(self)
+  subscribe_to_position_updates(self)
+end
+
 local function move(self, dt)
   if (not self.moving) then return end
 
   local pos = go.get_position()
   pos = pos + self.dir * self.speed * dt
+
   go.set_position(pos)
 end
 
@@ -73,8 +86,14 @@ local function fire(self)
   proyectile_dir.z = 0
   local angle = math.atan2(proyectile_dir.y, proyectile_dir.x)
   local rot = vmath.quat_rotation_z(angle)
-  
+
   factory.create('#proyectile_factory', nil, rot, { dir = proyectile_dir })
+end
+
+local function publish_position(self, dt)
+  if self.player.id ~= 1 then return end
+  local pos = go.get_position()
+  self.player.position:onNext({ x = pos.x, y = pos.y })
 end
 
 local function reset_after_update(self)
@@ -85,11 +104,12 @@ end
 function update(self, dt)
   move(self, dt)
   fire(self, dt)
+  publish_position(self, dt)
   reset_after_update(self)
 end
 
 function on_input(self, action_id, action)
-  self.player_input:onNext({
+  self.player.input:onNext({
     action_id = action_id,
     pressed   = action.pressed,
     released  = action.released,

@@ -1,10 +1,17 @@
 import { Client } from "colyseus";
+
 import PersistPlayerInputAction from './PersistPlayerInputAction'
+import UpdatePlayerPositionAction from './UpdatePlayerPositionAction'
+
 import PlayerInput from './PlayerInput'
 
-class Player {
+class Position {
   x: number = 0;
   y: number = 0;
+}
+
+class Player {
+  position: Position = new Position();
   input: {[id: string]: PlayerInput} = {};
 }
 
@@ -20,8 +27,13 @@ class MatchState {
   }
 
   persistPlayerInput(client: Client, action: PersistPlayerInputAction): void {
-    console.log(action)
     this.players[client.sessionId].input[new Date().getTime()] = action.input
+  }
+
+  updatePlayerPosition(client: Client, action: UpdatePlayerPositionAction) {
+    console.log(action)
+    this.players[client.sessionId].position.x = action.x
+    this.players[client.sessionId].position.y = action.y
   }
 }
 

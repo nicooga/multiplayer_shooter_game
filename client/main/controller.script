@@ -29,6 +29,25 @@ local function on_player_connected(session_id)
       y           = change.value.y
     })
   end)
+
+  local x = Rx.Subject.create()
+  local y = Rx.Subject.create()
+
+  room:listen('players/' .. session_id .. '/position/x', function(change)
+    if change.operation == 'add' or change.operation == 'replace' then
+      x:onNext(change.value)
+    end
+  end)
+
+  room:listen('players/' .. session_id .. '/position/y', function(change)
+    if change.operation == 'add' or change.operation == 'replace' then
+      y:onNext(change.value)
+    end
+  end)
+
+  Rx.Observable
+    .combineLatest(x, y, function(x, y) return { x = x, y = y } end)
+    :subscribe(function(pos) player.position:onNext(pos) end)
 end
 
 local function on_room_joined(self)
@@ -36,6 +55,14 @@ local function on_room_joined(self)
     id = 1,
     session_id = room.sessionId
   })
+
+  current_player.position:subscribe(function(pos)
+    room:send({
+      type = 'updatePlayerPosition',
+      x = pos.x,
+      y = pos.y
+    })
+  end)
 
   Rx.Subject.create()
     :merge(
@@ -51,7 +78,7 @@ local function on_room_joined(self)
     )
     :subscribe(function(input)
       room:send({
-        type = 'persist_player_input',
+        type = 'persistPlayerInput',
         input = {
           actionName = input.action_name,
           pressed    = input.pressed,
