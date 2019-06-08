@@ -28,17 +28,17 @@ local function subscribe_to_input_updates(self)
 
   Rx.Subject.create()
     :merge(
-      left_key_released:merge(right_key_released):tap(function(input) self.input.x = 0 end),
-      up_key_released:merge(down_key_released):tap(function(input) self.input.y = 0 end),
-      up_key_pressed:tap(function(input) self.input.y = 1 end),
-      down_key_pressed:tap(function(input) self.input.y = -1 end),
-      right_key_pressed:tap(function(input) self.input.x = 1 end),
-      left_key_pressed:tap(function(input) self.input.x = -1 end)
+      left_key_released:merge(right_key_released):tap(function(input) self.tempDir.x = 0 end),
+      up_key_released:merge(down_key_released):tap(function(input) self.tempDir.y = 0 end),
+      up_key_pressed:tap(function(input) self.tempDir.y = 1 end),
+      down_key_pressed:tap(function(input) self.tempDir.y = -1 end),
+      right_key_pressed:tap(function(input) self.tempDir.x = 1 end),
+      left_key_pressed:tap(function(input) self.tempDir.x = -1 end)
     )
     :subscribe(function(_input)
-      if vmath.length(self.input) > 0 then
+      if vmath.length(self.tempDir) > 0 then
         self.moving = true
-        self.dir = vmath.normalize(self.input)
+        self.dir = vmath.normalize(self.tempDir)
       else
         self.moving = false
       end
@@ -57,7 +57,7 @@ function init(self)
 
   self.player = MultiplayerOrchestrator:get_player_by_id(self.player_id)
   self.dir = vmath.vector3(0, 0, 0)
-  self.input = vmath.vector3(0, 0, 0)
+  self.tempDir = vmath.vector3(0, 0, 0)
   self.moving = false
   self.speed = 256
   self.firing = false

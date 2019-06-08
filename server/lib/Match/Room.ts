@@ -1,8 +1,6 @@
 import { Room, Client, FossilDeltaSerializer, serialize } from "colyseus";
 import MatchState from './State'
-
-import PersistPlayerInputAction from './PersistPlayerInputAction'
-import UpdatePlayerPositionAction from './UpdatePlayerPositionAction'
+import { PersistPlayerInputAction, UpdatePlayerPositionAction } from './types'
 
 @serialize(FossilDeltaSerializer)
 class MatchRoom extends Room<MatchState> {
