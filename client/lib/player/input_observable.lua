@@ -1,31 +1,31 @@
 local Rx = require 'vendor.rx'
 
-local PlayerInputObservable = {}
+local InputObservable = {}
 
-PlayerInputObservable.__index = function(self, key)
-  return PlayerInputObservable[key] or self.observable[key]
+function InputObservable:__index(key)
+  return InputObservable[key] or self.observable[key]
 end
 
-function PlayerInputObservable.create(observable)
+function InputObservable.create(observable)
   local observable = observable or Rx.Subject.create()
   local self = { observable = observable }
-  return setmetatable(self, PlayerInputObservable)
+  return setmetatable(self, InputObservable)
 end
 
-function PlayerInputObservable:pressed()
-  return PlayerInputObservable.create(
+function InputObservable:pressed()
+  return InputObservable.create(
     self:filter(function(input) return input.pressed end)
   )
 end
 
-function PlayerInputObservable:released()
-  return PlayerInputObservable.create(
+function InputObservable:released()
+  return InputObservable.create(
     self:filter(function(input) return input.released end)
   )
 end
 
-function PlayerInputObservable:by_action(action_name)
-  return PlayerInputObservable.create(
+function InputObservable:by_action(action_name)
+  return InputObservable.create(
     self
       :filter(function(input)
         if input.action_id then
@@ -41,4 +41,4 @@ function PlayerInputObservable:by_action(action_name)
   )
 end
 
-return PlayerInputObservable
+return InputObservable

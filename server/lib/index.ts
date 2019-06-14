@@ -15,7 +15,7 @@ const gameServer = new Server({ server });
 gameServer.register('match_room', MatchRoom);
 
 // Register colyseus monitor AFTER registering your room handlers
-app.use("/colyseus", monitor(gameServer));
+app.use("/monitor", monitor(gameServer));
 
 gameServer.listen(port);
-console.log(`Listening on ws://localhost:${ port }`)
+console.log(`Listening on ws://localhost:${port}`)

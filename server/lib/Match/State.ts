@@ -1,15 +1,12 @@
 import { Client } from "colyseus";
-import { PersistPlayerInputAction, UpdatePlayerPositionAction, PlayerInput } from './types'
-
-class Position {
-  x: number = 0;
-  y: number = 0;
-}
-
-class Player {
-  position: Position = new Position();
-  input: {[id: string]: PlayerInput} = {};
-}
+import Vector from '../Vector'
+import Quaternion from '../Quaternion'
+import {
+  Player,
+  Projectile,
+  UpdatePlayerPositionAction,
+  PersistPlayerProjectileAction
+} from './types'
 
 class MatchState {
   players: {[session_id: string]: Player} = {}
@@ -22,13 +19,23 @@ class MatchState {
     delete this.players[client.sessionId]
   }
 
-  persistPlayerInput(client: Client, action: PersistPlayerInputAction): void {
-    this.players[client.sessionId].input[new Date().getTime()] = action.input
+  updatePlayerPosition(client: Client, action: UpdatePlayerPositionAction) {
+    this.players[client.sessionId].position.x = action.position.x
+    this.players[client.sessionId].position.y = action.position.y
   }
 
-  updatePlayerPosition(client: Client, action: UpdatePlayerPositionAction) {
-    this.players[client.sessionId].position.x = action.x
-    this.players[client.sessionId].position.y = action.y
+  persistPlayerProjectile(client: Client, action: PersistPlayerProjectileAction) {
+    const { position, direction, rotation } = action.projectile
+
+    const projectile = new Projectile({
+      position: new Vector(position.x, position.y, position.z),
+      direction: new Vector(direction.x, direction.y, direction.z),
+      rotation: new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w)
+    })
+
+    this.players[client.sessionId].projectiles[new Date().getTime()] = projectile
+
+    console.log(this.players[client.sessionId])
   }
 }
 

@@ -5,7 +5,7 @@ images {
   image: "/assets/map.png"
 }
 images {
-  image: "/assets/proyectile.png"
+  image: "/assets/projectile.png"
 }
 margin: 0
 extrude_borders: 2

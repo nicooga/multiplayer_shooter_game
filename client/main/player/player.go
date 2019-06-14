@@ -34,9 +34,9 @@ embedded_components {
   }
 }
 embedded_components {
-  id: "proyectile_factory"
+  id: "projectile_factory"
   type: "factory"
-  data: "prototype: \"/main/proyectile/proyectile.go\"\n"
+  data: "prototype: \"/main/projectile/projectile.go\"\n"
   "load_dynamically: false\n"
   ""
   position {

@@ -1,8 +1,7 @@
 local Rx = require 'vendor.rx'
 local ColyseusClient = require 'colyseus.client'
 
-local PlayerInputObservable = require 'lib.player_input_observable'
-local MultiplayerOrchestrator = require 'lib.multiplayer_orchestrator'
+local Players = require 'lib.players'
 
 local CLIENT_URL = "ws://localhost:2567"
 local ROOM_NAME = "match_room"
@@ -12,7 +11,7 @@ local room
 local players = {}
 
 local function on_player_connected(session_id)
-  local player = MultiplayerOrchestrator:get_player_by_session_id(session_id)
+  local player = Players:get_player_by_session_id(session_id)
 
   if player.id == 1 then return end -- We don't capture input for player 1, no no.
 
@@ -48,10 +47,24 @@ local function on_player_connected(session_id)
   Rx.Observable
     .combineLatest(x, y, function(x, y) return { x = x, y = y } end)
     :subscribe(function(pos) player.position:onNext(pos) end)
+
+  room:listen('players/' .. session_id .. '/projectiles/:id', function(change)
+    pprint('PROYECTILE ARRIVED')
+
+    if change.operation == 'add' then
+      local p = change.value
+
+      player.projectiles:onNext({
+        position = vmath.vector3(p.position.x, p.position.y, p.position.z),
+        direction = vmath.vector3(p.direction.x, p.direction.y, p.direction.z),
+        rotation = vmath.quat(p.rotation.x, p.rotation.y, p.rotation.z, p.rotation.w)
+      })
+    end
+  end)
 end
 
 local function on_room_joined(self)
-  local current_player = MultiplayerOrchestrator:create_player({
+  local current_player = Players:create_player({
     id = 1,
     session_id = room.sessionId
   })
@@ -59,20 +72,17 @@ local function on_room_joined(self)
   current_player.position:subscribe(function(pos)
     room:send({
       type = 'updatePlayerPosition',
-      x = pos.x,
-      y = pos.y
+      position = { x = pos.x, y = pos.y }
     })
   end)
 
-  current_player.input:pressed():by_action('click'):subscribe(function(input)
+  current_player.projectiles:subscribe(function(p)
     room:send({
-      type = 'persistPlayerInput',
-      input = {
-        actionName = input.action_name,
-        pressed    = input.pressed,
-        released   = input.released,
-        x          = input.x,
-        y          = input.y
+      type = 'persistPlayerProjectile',
+      projectile = {
+        position = { x = p.position.x, y = p.position.y },
+        direction = { x = p.direction.x, y = p.direction.y },
+        rotation = { x = p.rotation.x, y = p.rotation.y, z = p.rotation.z, w = p.rotation.w }
       }
     })
   end)

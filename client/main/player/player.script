@@ -1,6 +1,6 @@
 local Rx = require 'vendor.rx'
 
-local MultiplayerOrchestrator = require 'lib.multiplayer_orchestrator'
+local Players = require 'lib.players'
 
 go.property('player_id', 1)
 
@@ -14,6 +14,8 @@ local function subscribe_to_position_updates(self)
 end
 
 local function subscribe_to_input_updates(self)
+  local self_id = go.get_id()
+
   local up_key_pressed    = self.player.input:pressed():by_action('up')
   local down_key_pressed  = self.player.input:pressed():by_action('down')
   local right_key_pressed = self.player.input:pressed():by_action('right')
@@ -23,8 +25,6 @@ local function subscribe_to_input_updates(self)
   local down_key_released  = self.player.input:released():by_action('down')
   local right_key_released = self.player.input:released():by_action('right')
   local left_key_released  = self.player.input:released():by_action('left')
-
-  local fired = self.player.input:pressed():by_action('click')
 
   Rx.Subject.create()
     :merge(
@@ -44,8 +44,8 @@ local function subscribe_to_input_updates(self)
       end
     end)
 
-  fired:subscribe(function(input)
-    self.firing_pos = vmath.vector3(input.x, input.y, 0)
+  self.player.projectiles:subscribe(function(projectile)
+    self.projectile = projectile
     self.firing = true
   end)
 end
@@ -55,7 +55,7 @@ function init(self)
     msg.post('.', 'acquire_input_focus')
   end
 
-  self.player = MultiplayerOrchestrator:get_player_by_id(self.player_id)
+  self.player = Players:get_player_by_id(self.player_id)
   self.dir = vmath.vector3(0, 0, 0)
   self.tempDir = vmath.vector3(0, 0, 0)
   self.moving = false
@@ -80,14 +80,12 @@ end
 local function fire(self)
   if (not self.firing) then return end
 
-  local player_pos = go.get_world_position()
-
-  local proyectile_dir = vmath.normalize(self.firing_pos - player_pos)
-  proyectile_dir.z = 0
-  local angle = math.atan2(proyectile_dir.y, proyectile_dir.x)
-  local rot = vmath.quat_rotation_z(angle)
-
-  factory.create('#proyectile_factory', nil, rot, { dir = proyectile_dir })
+  factory.create(
+    '#projectile_factory',
+    self.projectile.position,
+    self.projectile.rotation,
+    { dir = self.projectile.direction }
+  )
 end
 
 local function publish_position(self, dt)

@@ -1,18 +1,34 @@
 import BaseAction from '../BaseAction'
+import Vector from '../Vector'
+import Quaternion from '../Quaternion'
+
+export class Projectile {
+  position: Vector;
+  direction: Vector;
+  rotation: Quaternion;
+
+  constructor({
+    position,
+    direction,
+    rotation
+  }: { position: Vector, direction: Vector, rotation: Quaternion }) {
+    this.position = position
+    this.direction = direction
+    this.rotation = rotation
+  }
+}
+
+export class Player {
+  position: Vector = new Vector();
+  projectiles: {[sessionId: string]: Projectile} = {};
+}
 
 export interface UpdatePlayerPositionAction extends BaseAction {
   type: 'updatePlayerPosition';
-  x: number;
-  y: number;
+  position: Vector;
 }
 
-export interface PlayerInput {
-  actionName: string;
-  pressed: boolean;
-  released: boolean;
-}
-
-export interface PersistPlayerInputAction extends BaseAction {
-  type: 'persistPlayerInput';
-  input: PlayerInput;
+export interface PersistPlayerProjectileAction extends BaseAction {
+  type: 'persistPlayerProjectile';
+  projectile: Projectile;
 }
