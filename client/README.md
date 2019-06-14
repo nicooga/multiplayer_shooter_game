@@ -1,19 +1,13 @@
-# Welcome to Defold
+# Client
 
-This project was created from the "desktop" project template. This means that the settings in ["game.project"](defold://open?path=/game.project) have been changed to be suitable for a desktop game:
+This is the client for this multiplayer game. It's built using Defold, a game engine written in Lua.
+The engine is pretty simple and solves a lot of common issues like collision, sprite animation and more.
+I managed to complicate the implementation details by using [observables](https://github.com/bjornbytes/RxLua) for EVERYTHING :), just for fun and because I can.
 
-- The screen size is set to 1280x720
-- Projection is set to Fixed Fit
-- macOS and Windows icons are set
-- Mouse clicks are bound to action "click"
-- A simple script in a game object is set up to receive and react to input
+## Installation
 
-[Build and run](defold://build) to see it in action. You can of course alter these settings to fit your needs.
-
-Check out [the documentation pages](https://defold.com/learn) for examples, tutorials, manuals and API docs.
-
-If you run into trouble, help is available in [our forum](https://forum.defold.com).
-
-Happy Defolding!
-
----
+You'll need Defold IDE to compile the game. You can edit the source files with your favorite text editor though.
+The IDE is very lightweight and installs quickly. Get it [here](https://dashboard.defold.com).
+Then open the `client` folder from this repo.
+Hitting `Ctrl + B` will compile the game and run it. To run a second client for the second player you can use the correct executable under `client/bin` folder.
+At the moment the game is multiplayer only and it will throw an error if server is not reachable. Run the server on the background. instructions on the server README.
