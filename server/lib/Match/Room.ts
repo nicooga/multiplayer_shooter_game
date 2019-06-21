@@ -1,14 +1,12 @@
-import { Room, Client, FossilDeltaSerializer, serialize } from "colyseus";
+import { Room, Client, FossilDeltaSerializer, serialize } from 'colyseus';
 import MatchState from './State'
-import {
-  UpdatePlayerPositionAction,
-  PersistPlayerProjectileAction
-} from './types'
+import UpdatePlayerPositionAction from './UpdatePlayerPositionAction'
+import PersistPlayerProjectileAction from './PersistPlayerProjectileAction'
 
 @serialize(FossilDeltaSerializer)
 class MatchRoom extends Room<MatchState> {
   onInit(_options: any) { this.setState(new MatchState()) }
-  onJoin(client: Client, _options: any) { this.state.addPlayer(client) }
+  onJoin(client: Client, _options?: any) { this.state.addPlayer(client) }
   onLeave(client: Client) { this.state.removePlayer(client) }
   
   onMessage(client: Client, action: UpdatePlayerPositionAction | PersistPlayerProjectileAction) {

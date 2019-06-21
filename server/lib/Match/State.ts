@@ -1,14 +1,13 @@
 import { Client } from "colyseus";
+
 import Vector from '../Vector'
 import Quaternion from '../Quaternion'
-import {
-  Player,
-  Projectile,
-  UpdatePlayerPositionAction,
-  PersistPlayerProjectileAction
-} from './types'
+import Player from '../Player'
+import Projectile from '../Projectile'
+import UpdatePlayerPositionAction from './UpdatePlayerPositionAction'
+import PersistPlayerProjectileAction from './PersistPlayerProjectileAction'
 
-class MatchState {
+export default class MatchState {
   players: {[session_id: string]: Player} = {}
 
   addPlayer(client: Client): void {
@@ -34,9 +33,5 @@ class MatchState {
     })
 
     this.players[client.sessionId].projectiles[new Date().getTime()] = projectile
-
-    console.log(this.players[client.sessionId])
   }
 }
-
-export default MatchState

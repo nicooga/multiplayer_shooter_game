@@ -3,7 +3,7 @@ import express from "express";
 import { Server } from "colyseus";
 import { monitor } from "@colyseus/monitor";
 
-import MatchRoom from "./Match/Room";
+import { Room as MatchRoom } from "./Match";
 
 const port = Number(process.env.PORT || 2567);
 const app = express()
